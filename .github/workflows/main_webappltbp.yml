@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -29,13 +29,7 @@ jobs:
       
       - name: Install dependencies
         run: pip install -r requirements.txt
-
-      - name: Test
-        run: |
-          python -m pytest -v
         
-      # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
-
       - name: Zip artifact for deployment
         run: zip release.zip ./* -r
 
@@ -46,10 +40,18 @@ jobs:
           path: |
             release.zip
             !venv/
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Test
+        run: |
+          python -m pytest -v
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build-and-test
+    needs: test
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
